@@ -24,7 +24,6 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["nestconf*"]
 
 [tool.bumpver]
 current_version = "0.1.0"

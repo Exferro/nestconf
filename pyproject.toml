@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nestconf"
+version = "0.1.0"
+description = "A nested configuration management library for Python"
+authors = [{ name = "Oleksii Malyshev", email = "aleksei.o.malyshev@gmail.com" }]
+license = { text = "Apache-2.0" }
+readme = "README.md"
+requires-python = ">=3.7"  # dataclasses were introduced in Python 3.7
+
+# No external dependencies required - uses only standard library
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "mypy",
+    "flake8"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nestconf*"]
+
+[tool.bumpver]
+current_version = "0.1.0"
+version_pattern = "MAJOR.MINOR.PATCH"
+commit_message = "bump version {old_version} -> {new_version}"
+tag_message = "{new_version}"
+tag_scope = "default"
+pre_commit_hook = ""
+post_commit_hook = ""
+commit = true
+tag = true
+push = false
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    '^version = "{version}"',
+    '^current_version = "{version}"'
+]

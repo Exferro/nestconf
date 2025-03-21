@@ -14,11 +14,21 @@ class Config(ABC):
         Convert the configuration to a dictionary.
         """
         return {
-            attr_name: getattr(self, attr_name).to_dict() if hasattr(getattr(self, attr_name), 'to_dict')
-            else getattr(self, attr_name)
+            attr_name: self._convert_value_to_dict(getattr(self, attr_name))
             for attr_name in self.__dict__.keys()
         }
     
+    def _convert_value_to_dict(self, value):
+        """Helper method to convert values to dictionary representation."""
+        # Handle Configurable objects
+        if hasattr(value, 'config'):
+            return value.config.to_dict()
+        # Handle Config objects
+        elif hasattr(value, 'to_dict'):
+            return value.to_dict()
+        # Handle regular values
+        return value
+
     @classmethod
     def custom_json_encoder(cls, obj):
         """
@@ -34,20 +44,22 @@ class Config(ABC):
         Serialize the configuration to JSON.
         """
         return json.dumps(self.to_dict(),
-                          default=Config.custom_json_encoder, 
-                          indent=4)
+                         default=Config.custom_json_encoder, 
+                         indent=4)
 
     def to_json(self, filename: str = None):
         with open(filename, 'w') as f:
             json.dump(self.to_dict(),
-                      f,
-                      indent=4)
+                     f,
+                     indent=4)
     
     def to_path_suffix(self):
         path_suffix = []
         for attr_name in self.__dict__.keys():
             attr_val = getattr(self, attr_name)
-            if isinstance(attr_val, Config):
+            if hasattr(attr_val, 'config'):  # Handle Configurable
+                path_suffix.append(attr_val.config.to_path_suffix())
+            elif isinstance(attr_val, Config):  # Handle Config
                 path_suffix.append(attr_val.to_path_suffix())
             else:
                 path_suffix.append(f'{attr_name}={attr_val}')
@@ -60,7 +72,6 @@ class Config(ABC):
     def to_sha256_str(self):
         hash_factory = hashlib.sha256()
         hash_factory.update(bytes(self.__str__(), 'ascii'))
-
         return hash_factory.hexdigest()
     
     def __str__(self):

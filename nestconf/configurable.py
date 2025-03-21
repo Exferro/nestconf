@@ -1,4 +1,5 @@
 from dataclasses import make_dataclass, field, Field
+from typing import Any
 
 from .config import Config
 
@@ -11,48 +12,72 @@ class ConfigurableMeta(type):
         config_fields = []
         if '__annotations__' in dct:
             for field_name, field_type in dct['__annotations__'].items():
-                if isinstance(dct[field_name], Field):
+                if isinstance(dct.get(field_name), Field):
                     config_fields.append((field_name, 
-                                        field_type,
-                                        dct[field_name]))
+                                       field_type,
+                                       dct[field_name]))
+                elif field_name in dct:
+                    config_fields.append((field_name,
+                                       field_type,
+                                       field(default=dct[field_name])))
                 else:
                     config_fields.append((field_name,
-                                        field_type,
-                                        field(default=dct[field_name])))
+                                       field_type,
+                                       field(default=None)))
                     
-            # # Define the dynamically created Config class
+            # Define the dynamically created Config class
             config_name = f"{name}Config"
             config_class = make_dataclass(
-                config_name,  # Name of the dynamically created class
-                fields=config_fields,  # Dynamically extracted fields
-                bases=(Config,),  # Inherit from the base Config class
+                config_name,
+                fields=config_fields,
+                bases=(Config,),
             )
 
             # Attach the dynamically created Config class to the Configurable
             setattr(configurable_cls, "BOUND_CONFIG_CLASS", config_class)
 
-            for field_name, _, _ in config_fields:
-                def make_property(field_name):
-                    # Define a property dynamically
-                    return property(lambda self: getattr(self.config, field_name))
-                setattr(configurable_cls, field_name, make_property(field_name))
-
         return configurable_cls
     
 
 class Configurable(metaclass=ConfigurableMeta):
-    def __init__(self, 
-                 *,
-                 config: Config = None,
-                 **kwargs):
-        # Use the dynamically created Config class
-        if config is None:
-            self.config = self.BOUND_CONFIG_CLASS()
-        else:
+    def __init__(self, *, config: Config = None, **kwargs):
+        if config is not None:
             if not isinstance(config, self.BOUND_CONFIG_CLASS):
                 raise TypeError(f"Expected {self.BOUND_CONFIG_CLASS}, got {type(config)}.")
+            
+            # Check for value conflicts between config and kwargs
+            conflicts = []
+            for field_name in set(kwargs.keys()) & set(config.__dict__.keys()):
+                if kwargs[field_name] != config.__dict__[field_name]:
+                    conflicts.append(field_name)
+            
+            if conflicts:
+                raise ValueError(
+                    f"Conflicting values provided for {conflicts}. "
+                    "Config and direct arguments have different values for these attributes."
+                )
+            
+            # Set values from config
+            for field_name, value in config.__dict__.items():
+                setattr(self, field_name, value)
+
+        # Set values from kwargs
+        for field_name, value in kwargs.items():
+            if field_name in self.__annotations__:
+                setattr(self, field_name, value)
             else:
-                self.config = config
-        for arg_name, arg_val in kwargs.items():
-            if hasattr(self.config, arg_name):
-                setattr(self.config, arg_name, arg_val)
+                raise AttributeError(f"'{self.__class__.__name__}' has no annotated field '{field_name}'")
+
+        # Set remaining annotated fields to None if not set
+        for field_name in self.__annotations__:
+            if not hasattr(self, field_name):
+                setattr(self, field_name, None)
+
+    @property
+    def config(self) -> Config:
+        """Dynamically create a config object based on current attribute values."""
+        config_values = {
+            field_name: getattr(self, field_name)
+            for field_name in self.__annotations__
+        }
+        return self.BOUND_CONFIG_CLASS(**config_values)

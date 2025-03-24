@@ -46,16 +46,11 @@ class Configurable(metaclass=ConfigurableMeta):
                 raise TypeError(f"Expected {self.BOUND_CONFIG_CLASS}, got {type(config)}.")
             
             # Check for value conflicts between config and kwargs
-            conflicts = []
             for field_name in set(kwargs.keys()) & set(config.__dict__.keys()):
                 if kwargs[field_name] != config.__dict__[field_name]:
-                    conflicts.append(field_name)
-            
-            if conflicts:
-                raise ValueError(
-                    f"Conflicting values provided for {conflicts}. "
-                    "Config and direct arguments have different values for these attributes."
-                )
+                    raise ValueError(
+                    f"Conflicting values provided for {field_name}. "
+                    "Config and direct arguments have different values for these attributes.")                
             
             # Set values from config
             for field_name, value in config.__dict__.items():

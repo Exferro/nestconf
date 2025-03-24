@@ -1,7 +1,6 @@
 import pytest
 from nestconf import Configurable
 
-
 class Person(Configurable):
     name: str = None
     age: int = None

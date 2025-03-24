@@ -43,8 +43,8 @@ def test_config_kwargs_conflict():
 
 def test_config_kwargs_no_conflict():
     """Test that non-conflicting values between config and kwargs work."""
-    config = Person.BOUND_CONFIG_CLASS(name="John", age=30)
-    person = Person(config=config, people_root_path="/data")
+    config = Person.BOUND_CONFIG_CLASS(name="John")
+    person = Person(config=config, age=30, people_root_path="/data")
     assert person.name == "John"
     assert person.age == 30
     assert person.people_root_path == "/data"

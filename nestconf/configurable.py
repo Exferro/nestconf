@@ -1,5 +1,4 @@
 from dataclasses import make_dataclass, field, Field
-from typing import Any
 
 from .config import Config
 
@@ -48,9 +47,12 @@ class Configurable(metaclass=ConfigurableMeta):
             # Check for value conflicts between config and kwargs
             for field_name in set(kwargs.keys()) & set(config.__dict__.keys()):
                 if kwargs[field_name] != config.__dict__[field_name]:
-                    raise ValueError(
-                    f"Conflicting values provided for {field_name}. "
-                    "Config and direct arguments have different values for these attributes.")                
+                    if (not (kwargs[field_name] is None)) and (not (config.__dict__[field_name] is None)):
+                        raise ValueError(
+                        f"Conflicting values provided for {field_name}. "
+                        "Config and direct arguments have different values for these attributes. "
+                        "Config value: {config.__dict__[field_name]}. "
+                        "Direct argument value: {kwargs[field_name]}.")                
             
             # Set values from config
             for field_name, value in config.__dict__.items():

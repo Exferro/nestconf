@@ -67,7 +67,7 @@ class Config(ABC):
                 else:
                     path_suffix.append(f'{attr_name}={attr_val}')
 
-        return os.path.join(*path_suffix)
+        return os.path.join(*path_suffix) if len(path_suffix) > 0 else ''
 
     def __hash__(self):
         return hash(self.to_json_dict())

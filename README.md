@@ -43,21 +43,28 @@ pip install nestconf
 
 ### Basic Example
 
-Here's a simple example of how to use nestconf:
+Let's say you have a class with some configurable parameters. To make it work with nestconf, you just need to:
+
+1. Inherit from `Configurable`
+2. Add type annotations to the fields you want to be part of the configuration
+
+Here's a simple example:
 
 ```python
 from nestconf import Configurable
 
 class Person(Configurable):
+    # These fields will be part of the configuration
     name: str = None
     age: int = None
 
     def __init__(self, *, config=None, people_root_path: str = None, **kwargs):
         super().__init__(config=config, **kwargs)
+        # This field won't be part of the configuration
         self.people_root_path = people_root_path
 ```
 
-When you define a class that inherits from `Configurable`, a corresponding Config class is automatically created. In this case, `PersonConfig` is created with the same fields as `Person`.
+Thanks to Python's metaclass magic, a corresponding `PersonConfig` class is automatically created with the same fields as the type-annotated fields in `Person`. This is similar to how dataclasses work, but with additional configuration management features. The Config class will always be named by appending "Config" to the original class name (e.g., `PersonConfig` for `Person`).
 
 ### Initialization Methods
 
@@ -70,7 +77,7 @@ person = Person(name="John", age=30, people_root_path="/data")
 
 2. Using a Config object:
 ```python
-config = Person.BOUND_CONFIG_CLASS(name="John", age=30)
+config = PersonConfig(name="John", age=30)
 person = Person(config=config, people_root_path="/data")
 ```
 
@@ -78,7 +85,7 @@ person = Person(config=config, people_root_path="/data")
 
 nestconf prevents conflicts between config and kwargs:
 ```python
-config = Person.BOUND_CONFIG_CLASS(name="John", age=30)
+config = PersonConfig(name="John", age=30)
 # This will raise a ValueError due to conflicting name values
 person = Person(config=config, name="Jane", people_root_path="/data")
 ```
@@ -132,8 +139,8 @@ config.to_json("person_config.json")
 
 Config objects can be compared using hash-based equality:
 ```python
-config1 = Person.BOUND_CONFIG_CLASS(name="John", age=30)
-config2 = Person.BOUND_CONFIG_CLASS(name="John", age=30)
+config1 = PersonConfig(name="John", age=30)
+config2 = PersonConfig(name="John", age=30)
 assert config1 == config2  # True
 ```
 

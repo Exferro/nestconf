@@ -57,3 +57,23 @@ def test_config_property():
     assert config.name == "John"
     assert config.age == 30
     assert not hasattr(config, 'people_root_path')  # Non-annotated field should not be in config 
+
+
+def test_path_suffix_stop_at_none():
+    """Test that to_path_suffix stops at None when stop_at_none is True."""
+    class TestPerson(Configurable):
+        name: str = None
+        age: int = None
+        city: str = None
+        country: str = None
+
+    # Case 1: All values set
+    person1 = TestPerson(name="John", age=30, city="London", country="UK")
+    assert person1.config.to_path_suffix() == "name=John/age=30/city=London/country=UK"
+
+    # Case 2: With None in the middle and stop_at_none=True
+    person2 = TestPerson(name="John", age=None, city="London", country="UK")
+    assert person2.config.to_path_suffix(stop_at_none=True) == "name=John"
+
+    # Case 3: With None in the middle and stop_at_none=False (default behavior)
+    assert person2.config.to_path_suffix() == "name=John/age=None/city=London/country=UK" 

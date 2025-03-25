@@ -53,16 +53,19 @@ class Config(ABC):
                      f,
                      indent=4)
     
-    def to_path_suffix(self):
+    def to_path_suffix(self, stop_at_none: bool = False):
         path_suffix = []
         for attr_name in self.__dict__.keys():
             attr_val = getattr(self, attr_name)
-            if hasattr(attr_val, 'config'):  # Handle Configurable
-                path_suffix.append(attr_val.config.to_path_suffix())
-            elif isinstance(attr_val, Config):  # Handle Config
-                path_suffix.append(attr_val.to_path_suffix())
+            if stop_at_none and attr_val is None:
+                break
             else:
-                path_suffix.append(f'{attr_name}={attr_val}')
+                if hasattr(attr_val, 'config'):  # Handle Configurable
+                    path_suffix.append(attr_val.config.to_path_suffix())
+                elif isinstance(attr_val, Config):  # Handle Config
+                    path_suffix.append(attr_val.to_path_suffix())
+                else:
+                    path_suffix.append(f'{attr_name}={attr_val}')
 
         return os.path.join(*path_suffix)
 

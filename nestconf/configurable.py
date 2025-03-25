@@ -1,3 +1,5 @@
+import sys
+
 from dataclasses import make_dataclass, field, Field
 
 from .config import Config
@@ -32,9 +34,16 @@ class ConfigurableMeta(type):
                 bases=(Config,),
             )
 
+            # Set the module of the config class to be the same as the original class
+            config_class.__module__ = configurable_cls.__module__
+
             # Attach the dynamically created Config class to the Configurable
             setattr(configurable_cls, "BOUND_CONFIG_CLASS", config_class)
 
+            # Add the config class to the correct module's namespace
+            module = sys.modules[configurable_cls.__module__]
+            setattr(module, config_name, config_class)
+            
         return configurable_cls
     
 

@@ -31,7 +31,6 @@ pip install nestconf
 ## Features
 
 - Automatic Config class generation for each Configurable class
-- Type-safe configuration parameters
 - Support for nested configurations
 - Flexible initialization with either kwargs or Config objects
 - Conflict detection between config and kwargs
@@ -165,24 +164,6 @@ person = Person(
 )
 print(person.config.to_path_suffix())
 # Output: "name=John/address=street=123 Main St/city=London"
-```
-
-### Type Safety
-
-The library ensures type safety through Python's type annotations. Only annotated fields are included in the configuration:
-
-```python
-class Person(Configurable):
-    name: str = None
-    age: int = None
-    # This field won't be included in the config
-    internal_id = "123"
-
-person = Person(name="John", age=30, internal_id="456")
-config = person.config
-assert hasattr(config, "name")  # True
-assert hasattr(config, "age")   # True
-assert not hasattr(config, "internal_id")  # True
 ```
 
 ## Requirements

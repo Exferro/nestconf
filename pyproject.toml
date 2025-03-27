@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nestconf"
-version = "0.2.2"
+version = "0.3.0"
 description = "A nested configuration management library for Python"
 authors = [{ name = "Oleksii Malyshev", email = "aleksei.o.malyshev@gmail.com" }]
 license = { text = "Apache-2.0" }
@@ -26,7 +26,7 @@ dev = [
 where = ["."]
 
 [tool.bumpver]
-current_version = "0.2.2"
+current_version = "0.3.0"
 version_pattern = "MAJOR.MINOR.PATCH"
 commit_message = "bump version {old_version} -> {new_version}"
 tag_message = "{new_version}"

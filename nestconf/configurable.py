@@ -1,14 +1,30 @@
 import sys
 
-from dataclasses import make_dataclass, field, Field
+from dataclasses import make_dataclass, field, Field, MISSING
 
 from .config import Config
 
 
 class ConfigurableMeta(type):
     def __new__(cls, name, bases, dct):
+        # Create a copy of dct for the class creation
+        class_dct = dct.copy()
+        
+        # If there are annotations, handle the fields
+        if '__annotations__' in class_dct:
+            for field_name, field_type in class_dct['__annotations__'].items():
+                if isinstance(class_dct.get(field_name), Field):
+                    # If it's a Field, evaluate its default_factory or default
+                    field_obj = class_dct[field_name]
+                    if field_obj.default_factory is not MISSING:
+                        class_dct[field_name] = field_obj.default_factory()
+                    elif field_obj.default is not MISSING:
+                        class_dct[field_name] = field_obj.default
+                    else:
+                        class_dct[field_name] = None
+
         # Create the Configurable class
-        configurable_cls = super().__new__(cls, name, bases, dct)
+        configurable_cls = super().__new__(cls, name, bases, class_dct)
 
         config_fields = []
         if '__annotations__' in dct:
@@ -59,9 +75,9 @@ class Configurable(metaclass=ConfigurableMeta):
                     if (not (kwargs[field_name] is None)) and (not (config.__dict__[field_name] is None)):
                         raise ValueError(
                         f"Conflicting values provided for {field_name}. "
-                        "Config and direct arguments have different values for these attributes. "
-                        "Config value: {config.__dict__[field_name]}. "
-                        "Direct argument value: {kwargs[field_name]}.")                
+                        f"Config and direct arguments have different values for these attributes. "
+                        f"Config value: {config.__dict__[field_name]}. "
+                        f"Direct argument value: {kwargs[field_name]}.")                
             
             # Set values from config
             for field_name, value in config.__dict__.items():

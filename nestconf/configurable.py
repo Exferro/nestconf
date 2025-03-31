@@ -48,6 +48,8 @@ class ConfigurableMeta(type):
                 config_name,
                 fields=config_fields,
                 bases=(Config,),
+                frozen=True,
+                eq=False,
             )
 
             # Set the module of the config class to be the same as the original class
